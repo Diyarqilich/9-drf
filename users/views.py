@@ -1,46 +1,18 @@
-from .models import Users
-from .serializers import UsersSerializer
-from rest_framework.decorators import api_view
+from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import RegisterSerializer
 
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
 
-@api_view(["GET"])
-def UsersListView(request):
-    serializer = UsersSerializer(Users.objects.all(), many=True)
-    return Response(serializer.data)
-
-
-@api_view(["GET"])
-def UsersDetailView(request, pk):
-    serializer = UsersSerializer(Users.objects.get(pk=pk))
-    return Response(serializer.data)
-
-
-@api_view(["POST"])
-def UsersCreateView(request):
-    serializer = UsersSerializer(data=request.data)
-    serializer.is_valid()
-    serializer.save()
-    return Response(serializer.data)
-
-
-@api_view(["PUT", "PATCH"])
-def UsersUpdateView(request, pk):
-    user = Users.objects.get(pk=pk)
-
-    if request.method == "PUT":
-        serializer = UsersSerializer(user, data=request.data)
-
-    if request.method == "PATCH":
-        serializer = UsersSerializer(user, data=request.data, partial=True)
-
-    serializer.is_valid()
-    serializer.save()
-    return Response(serializer.data)
-
-
-@api_view(["DELETE"])
-def UsersDeleteView(request, pk):
-    user = Users.objects.get(pk=pk)
-    user.delete()
-    return Response({"message": "Deleted"})
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Successfully logged out"}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)

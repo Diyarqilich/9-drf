@@ -1,8 +1,21 @@
-from .models import Users
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
+from .models import CustomUser
 
-class UsersSerializers(ModelSerializer):
-    class Meta :
-        model = Users
-        fields = ["name", "surename", "age", "create_at"]
-        read_only_fields = ["create_at"]
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'password', 'first_name', 'last_name', 'phone_number', 'bio']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        user = CustomUser.objects.create_user(
+            username=validated_data["username"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+            phone_number=validated_data["phone_number"],
+            bio=validated_data.get("bio", ""),
+            password=validated_data["password"],
+        )
+        return user
